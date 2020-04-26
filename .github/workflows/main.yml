@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: use docker
-        uses: docker://yoannguion/mock-rpmbuilder@latest
+        uses: docker://yoannguion/mock-rpmbuilder
         with:
           MOCK_CONFIG: epel-8-x86_64
           SPEC_FILE: openldap.spec
