@@ -24,7 +24,6 @@ jobs:
 
       - name: use docker
         env:
-          MOCK_CONFIG: epel-8-x86_64
           SPEC_FILE: openldap.spec
-        uses: docker://yoannguion/mock-rpmbuilder
+        uses: docker://yoannguion/rpmbuilder
 
