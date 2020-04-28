@@ -25,6 +25,7 @@ jobs:
       - name: build rpm
         env:
           SPEC_FILE: openldap.spec
+          RELEASE_TAG: v2.4.49
           RELEASE_GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
         uses: docker://yoannguion/rpmbuilder
 

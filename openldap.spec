@@ -4,7 +4,7 @@
 %global check_password_version 1.1
 
 Name: openldap
-Version: 2.4.46
+Version: 2.4.49
 Release: 0%{?dist}
 Summary: LDAP support libraries
 License: OpenLDAP
@@ -33,9 +33,6 @@ Patch17: openldap-allop-overlay.patch
 # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=327585
 Patch19: openldap-switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.patch
 # ldapi sasl fix pending upstream inclusion
-Patch20: openldap-ldapi-sasl.patch
-Patch22: openldap-openssl-ITS7595-Add-EC-support-1.patch
-Patch23: openldap-openssl-ITS7595-Add-EC-support-2.patch
 Patch24: openldap-openssl-manpage-defaultCA.patch
 Patch25: openldap-tlso-use-openssl-api-to-verify-host.patch
 
@@ -113,9 +110,6 @@ AUTOMAKE=%{_bindir}/true autoreconf -fi
 %patch5 -p1
 %patch17 -p1
 %patch19 -p1
-%patch20 -p1
-%patch22 -p1
-%patch23 -p1
 %patch24 -p1
 %patch25 -p1
 
