@@ -4,7 +4,7 @@
 %global check_password_version 1.1
 
 Name: openldap
-Version: 2.4.49
+Version: 2.4.46
 Release: 0%{?dist}
 Summary: LDAP support libraries
 License: OpenLDAP
