@@ -5,10 +5,10 @@ Upstream ITS: #7326
 Resolves: #835013
 
 diff --git a/libraries/libldap/os-ip.c b/libraries/libldap/os-ip.c
-index b31e05d..fa361ab 100644
+index 14899cc..b25e750 100644
 --- a/libraries/libldap/os-ip.c
 +++ b/libraries/libldap/os-ip.c
-@@ -594,8 +594,7 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
+@@ -620,8 +620,7 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
  
  #if defined( HAVE_GETADDRINFO ) && defined( HAVE_INET_NTOP )
  	memset( &hints, '\0', sizeof(hints) );
