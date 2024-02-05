@@ -6,7 +6,7 @@ name: buildrpm
 # events but only for the master branch
 on:
   push:
-    branches: [ el9 ]
+    branches: [ test-el9 ]
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -26,6 +26,6 @@ jobs:
       - name: release rpm
         uses: ncipollo/release-action@v1
         with:
-          tag: v2.6.3
+          tag: v2.6.3-test
           artifacts: "*.src.rpm,*.rpm"
           token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
