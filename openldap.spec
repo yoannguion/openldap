@@ -6,7 +6,7 @@
 %global so_ver 2
 %global so_ver_compat 2
 
-%bcond_with servers
+%bcond_without servers
 
 # When you change "Version: " to the new major version, remember to change this value too
 %global major_version 2.6
