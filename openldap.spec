@@ -1,3 +1,4 @@
+%define __brp_check_rpaths %{nil}
 %global _hardened_build 1
 
 %global systemctl_bin /usr/bin/systemctl
