@@ -8,7 +8,7 @@ Resolves: #179730
 Author: Jeffery Layton <jlayton@redhat.com>
 
 diff --git a/libraries/libldap/util-int.c b/libraries/libldap/util-int.c
-index aa69f70..4461bf2 100644
+index 373c81c..a012062 100644
 --- a/libraries/libldap/util-int.c
 +++ b/libraries/libldap/util-int.c
 @@ -52,8 +52,8 @@ extern int h_errno;
@@ -22,7 +22,7 @@ index aa69f70..4461bf2 100644
  
  #else
  # include <ldap_pvt_thread.h>
-@@ -442,7 +442,7 @@ ldap_pvt_csnstr(char *buf, size_t len, unsigned int replica, unsigned int mod)
+@@ -317,7 +317,7 @@ ldap_pvt_csnstr(char *buf, size_t len, unsigned int replica, unsigned int mod)
  #define BUFSTART (1024-32)
  #define BUFMAX (32*1024-32)
  

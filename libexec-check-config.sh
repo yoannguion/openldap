@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/bin/sh
 # Author: Jan Vcelak <jvcelak@redhat.com>
 
 . /usr/libexec/openldap/functions
@@ -41,7 +41,7 @@ function check_db_perms()
 	retcode=0
 	for dbdir in `databases`; do
 		[ -d "$dbdir" ] || continue
-		for dbfile in `find ${dbdir} -maxdepth 1 -name "*.mdb"` ; do
+		for dbfile in `find ${dbdir} -maxdepth 1 -name "*.dbb" -or -name "*.gdbm" -or -name "*.bdb" -or -name "__db.*" -or -name "log.*" -or -name "alock"`; do
 			run_as_ldap "/usr/bin/test -r \"$dbfile\" -a -w \"$dbfile\""
 			if [ $? -ne 0 ]; then
 				error "Read/write permissions for DB file '%s' are required." "$dbfile"
@@ -52,21 +52,12 @@ function check_db_perms()
 	return $retcode
 }
 
-function check_major_upgrade()
-{
-	retcode=0
-	if [ -f "/usr/share/openldap-servers/UPGRADE_INSTRUCTIONS" ]; then
-		error "You have upgraded your openldap-servers package. There are actions that need to be performed. Please, read the /usr/share/openldap-servers/UPGRADE_INSTRUCTIONS file"
-		retcode=1
-	fi
-	return $retcode
-}
-
 function check_everything()
 {
 	retcode=0
 	check_config_syntax || retcode=1
-	check_certs_perms || retcode=1
+	# TODO: need support for Mozilla NSS, disabling temporarily
+	#check_certs_perms || retcode=1
 	check_db_perms || retcode=1
 	return $retcode
 }
@@ -75,8 +66,6 @@ if [ `id -u` -ne 0 ]; then
 	error "You have to be root to run this script."
 	exit 4
 fi
-
-check_major_upgrade || return 1
 
 load_sysconfig
 

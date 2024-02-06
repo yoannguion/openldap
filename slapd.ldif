@@ -42,41 +42,36 @@ cn: config
 #
 # Load dynamic backend modules:
 # - modulepath is architecture dependent value (32/64-bit system)
+# - back_sql.la backend requires openldap-servers-sql package
 # - dyngroup.la and dynlist.la cannot be used at the same time
 #
 
 #dn: cn=module,cn=config
 #objectClass: olcModuleList
 #cn: module
-#olcModulepath: /usr/lib/openldap
-#olcModulepath: /usr/lib64/openldap
+#olcModulepath:	/usr/lib/openldap
+#olcModulepath:	/usr/lib64/openldap
 #olcModuleload: accesslog.la
-#olcModuleload: allop.la
 #olcModuleload: auditlog.la
-#olcModuleload: autoca.la
-#olcModuleload: back_asyncmeta.la
 #olcModuleload: back_dnssrv.la
 #olcModuleload: back_ldap.la
+#olcModuleload: back_mdb.la
 #olcModuleload: back_meta.la
 #olcModuleload: back_null.la
 #olcModuleload: back_passwd.la
 #olcModuleload: back_relay.la
+#olcModuleload: back_shell.la
 #olcModuleload: back_sock.la
-#olcModuleload: check_password.la
 #olcModuleload: collect.la
 #olcModuleload: constraint.la
 #olcModuleload: dds.la
 #olcModuleload: deref.la
 #olcModuleload: dyngroup.la
 #olcModuleload: dynlist.la
-#olcModuleload: home.la
-#olcModuleload: lloadd.la
 #olcModuleload: memberof.la
-#olcModuleload: otp.la
 #olcModuleload: pcache.la
 #olcModuleload: ppolicy.la
 #olcModuleload: refint.la
-#olcModuleload: remoteauth.la
 #olcModuleload: retcode.la
 #olcModuleload: rwm.la
 #olcModuleload: seqmod.la

@@ -84,6 +84,14 @@ function databases_new()
 		ldif_value
 }
 
+function databases_old()
+{
+	awk	'begin { database="" }
+		$1 == "database" { database=$2 }
+		$1 == "directory" { if (database == "bdb" || database == "hdb") print $2}' \
+		"$SLAPD_CONFIG_FILE"
+}
+
 function certificates_new()
 {
 	slapcat $SLAPD_GLOBAL_OPTIONS -c -H 'ldap:///cn=config???(cn=config)' 2>/dev/null | \
@@ -92,14 +100,20 @@ function certificates_new()
 		ldif_value
 }
 
+function certificates_old()
+{
+	awk '$1 ~ "^TLS(CACertificate(File|Path)|CertificateFile|CertificateKeyFile)$" { print $2 } ' \
+		"$SLAPD_CONFIG_FILE"
+}
+
 function certificates()
 {
-	uses_new_config && certificates_new
+	uses_new_config && certificates_new || certificates_old
 }
 
 function databases()
 {
-	uses_new_config && databases_new
+	uses_new_config && databases_new || databases_old
 }
 
 

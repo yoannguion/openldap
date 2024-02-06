@@ -3,6 +3,7 @@ Description=OpenLDAP Server Daemon
 After=syslog.target network-online.target
 Documentation=man:slapd
 Documentation=man:slapd-config
+Documentation=man:slapd-hdb
 Documentation=man:slapd-mdb
 Documentation=file:///usr/share/doc/openldap-servers/guide.html
 

@@ -3,74 +3,68 @@
 %global systemctl_bin /usr/bin/systemctl
 %global check_password_version 1.1
 
-%global so_ver 2
-%global so_ver_compat 2
-
-%bcond_without servers
-
-# When you change "Version: " to the new major version, remember to change this value too
-%global major_version 2.6
-
-# Disable automatic .la file removal
-%global __brp_remove_la_files %nil
-
 Name: openldap
-Version: 2.6.3
-Release: 1%{?dist}
+Version: 2.4.46
+Release: 18%{?dist}
 Summary: LDAP support libraries
 License: OpenLDAP
 URL: http://www.openldap.org/
 
-Source0: https://openldap.org/software/download/OpenLDAP/openldap-release/openldap-%{version}.tgz
+Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
 Source1: slapd.service
 Source2: slapd.tmpfiles
 Source3: slapd.ldif
 Source4: ldap.conf
-Source5: UPGRADE_INSTRUCTIONS
-Source10: https://github.com/ltb-project/openldap-ppolicy-check-password/archive/v%{check_password_version}/openldap-ppolicy-check-password-%{check_password_version}.tar.gz
+Source10: ltb-project-openldap-ppolicy-check-password-%{check_password_version}.tar.gz
 Source50: libexec-functions
 Source52: libexec-check-config.sh
+Source53: libexec-upgrade-db.sh
 
-# Patches for 2.6
+# patches for 2.4
 Patch0: openldap-manpages.patch
-Patch1: openldap-reentrant-gethostby.patch
-
+Patch2: openldap-reentrant-gethostby.patch
 Patch3: openldap-smbk5pwd-overlay.patch
-Patch4: openldap-ai-addrconfig.patch
-Patch5: openldap-allop-overlay.patch
+Patch5: openldap-ai-addrconfig.patch
+Patch17: openldap-allop-overlay.patch
+Patch18: openldap-cldap-check-for-error-on-connected-socket.patch
 
 # fix back_perl problems with lt_dlopen()
 # might cause crashes because of symbol collisions
 # the proper fix is to link all perl modules against libperl
 # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=327585
-Patch6: openldap-switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.patch
+Patch19: openldap-switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.patch
+# ldapi sasl fix pending upstream inclusion
+Patch20: openldap-ldapi-sasl.patch
+Patch22: openldap-openssl-ITS7595-Add-EC-support-1.patch
+Patch23: openldap-openssl-ITS7595-Add-EC-support-2.patch
+Patch24: openldap-openssl-manpage-defaultCA.patch
 
-# System-wide default for CA certs
-Patch7: openldap-openssl-manpage-defaultCA.patch
-Patch8: openldap-add-export-symbols-LDAP_CONNECTIONLESS.patch
-Patch9: openldap-Revert-ITS-8618-Remove-deprecated-h-and-p.patch
+# The below patches come from upstream master and are necessary for Channel Binding
+# (both tls-unique and tls-server-end-point) to work properly.
+# Additionally, for Samba to be able to implement Channel Binding, the PEERCERT option
+# is being included as well.
+Patch50: openldap-cbinding-Add-channel-binding-support.patch
+Patch51: openldap-cbinding-ITS-8573-allow-all-libldap-options-in-tools-o-option.patch
+Patch52: openldap-cbinding-ITS-8573-TLS-option-test-suite.patch
+Patch53: openldap-cbinding-ITS-8573-Add-missing-URI-variables-for-tests.patch
+Patch54: openldap-cbinding-auth-add-SASL-GSSAPI-tests.patch
+Patch55: openldap-cbinding-ITS-7398-add-LDAP_OPT_X_TLS_PEERCERT.patch
+Patch56: openldap-cbinding-Make-prototypes-available-where-needed.patch
+Patch57: openldap-cbinding-ITS-9189_1-rework-sasl-cbinding-support.patch
+Patch58: openldap-cbinding-ITS-9189_2-add-channel-bindings-tests.patch
+Patch59: openldap-cbinding-ITS-9189_3-initialize-ldo_sasl_cbinding-in-LDAP_LDO_SA.patch
+Patch60: openldap-cbinding-Fix-slaptest-in-test077.patch
+Patch61: openldap-cbinding-Convert-test077-to-LDIF-config.patch
+Patch62: openldap-cbinding-Update-keys-to-RSA-4096.patch
+Patch63: openldap-add-TLS_REQSAN-option.patch
+Patch64: openldap-change-TLS_REQSAN-default-to-TRY.patch
 
 # check-password module specific patches
 Patch90: check-password-makefile.patch
 Patch91: check-password.patch
 
-BuildRequires: cyrus-sasl-devel
-BuildRequires: gcc
-BuildRequires: glibc-devel
-BuildRequires: groff
-BuildRequires: krb5-devel
-BuildRequires: libtool-ltdl-devel
-BuildRequires: libevent-devel
-BuildRequires: make
-BuildRequires: openssl-devel
-BuildRequires: perl(ExtUtils::Embed)
-BuildRequires: perl-devel
-BuildRequires: perl-generators
-BuildRequires: perl-interpreter
-BuildRequires: unixODBC-devel
-BuildRequires: systemd
-BuildRequires: libdb-devel
-BuildRequires: cracklib-devel
+BuildRequires: cyrus-sasl-devel, openssl-devel, krb5-devel, unixODBC-devel
+BuildRequires: glibc-devel, libtool, libtool-ltdl-devel, groff, perl-interpreter, perl-devel, perl-generators, perl(ExtUtils::Embed)
 
 %description
 OpenLDAP is an open source suite of LDAP (Lightweight Directory Access
@@ -83,8 +77,7 @@ libraries, and documentation for OpenLDAP.
 
 %package devel
 Summary: LDAP development libraries and header files
-Requires: openldap%{?_isa} = %{version}-%{release}
-Requires: cyrus-sasl-devel%{?_isa}
+Requires: openldap%{?_isa} = %{version}-%{release}, cyrus-sasl-devel%{?_isa}
 
 %description devel
 The openldap-devel package includes the development libraries and
@@ -94,35 +87,15 @@ protocols for enabling directory services over the Internet. Install
 this package only if you plan to develop or will need to compile
 customized LDAP clients.
 
-%package compat
-Summary: Package providing legacy non-threaded libldap
-Requires: openldap%{?_isa} = %{version}-%{release}
-# since libldap is manually linked from libldap_r, the provides is not generated automatically
-%ifarch armv7hl i686
-Provides: libldap-2.4.so.%{so_ver_compat}
-Provides: libldap_r-2.4.so.%{so_ver_compat}
-Provides: liblber-2.4.so.%{so_ver_compat}
-Provides: libslapi-2.4.so.%{so_ver_compat}
-%else
-Provides: libldap-2.4.so.%{so_ver_compat}()(%{__isa_bits}bit)
-Provides: libldap_r-2.4.so.%{so_ver_compat}()(%{__isa_bits}bit)
-Provides: liblber-2.4.so.%{so_ver_compat}()(%{__isa_bits}bit)
-Provides: libslapi-2.4.so.%{so_ver_compat}()(%{__isa_bits}bit)
-%endif
-
-%description compat
-The openldap-compat package contains shared libraries named as libldap-2.4.so,
-libldap_r-2.4.so, liblber-2.4.so and libslapi-2.4.so.
-The libraries are just links to the current version shared libraries,
-and are available for compatibility reasons.
-
-%if %{with servers}
 %package servers
 Summary: LDAP server
 License: OpenLDAP
-Requires: openldap%{?_isa} = %{version}-%{release}
-%{?systemd_requires}
+Requires: openldap%{?_isa}, libdb-utils
 Requires(pre): shadow-utils
+BuildRequires: systemd
+%{?systemd_requires}
+BuildRequires: libdb-devel
+BuildRequires: cracklib-devel
 # migrationtools (slapadd functionality):
 Provides: ldif2ldbm
 
@@ -133,8 +106,6 @@ protocols for accessing directory services (usually phone book style
 information, but other information is possible) over the Internet,
 similar to the way DNS (Domain Name System) information is propagated
 over the Internet. This package contains the slapd server and related files.
-# endif with servers
-%endif
 
 %package clients
 Summary: LDAP client utilities
@@ -153,15 +124,35 @@ programs needed for accessing and modifying OpenLDAP directories.
 %setup -q -c -a 0 -a 10
 
 pushd openldap-%{version}
+
+AUTOMAKE=%{_bindir}/true autoreconf -fi
+
 %patch0 -p1
-%patch1 -p1
+%patch2 -p1
 %patch3 -p1
-%patch4 -p1
 %patch5 -p1
-%patch6 -p1
-%patch7 -p1
-%patch8 -p1
-%patch9 -p1
+%patch17 -p1
+%patch18 -p1
+%patch19 -p1
+%patch20 -p1
+%patch22 -p1
+%patch23 -p1
+%patch24 -p1
+%patch50 -p1
+%patch51 -p1
+%patch52 -p1
+%patch53 -p1
+%patch54 -p1
+%patch55 -p1
+%patch56 -p1
+%patch57 -p1
+%patch58 -p1
+%patch59 -p1
+%patch60 -p1
+%patch61 -p1
+%patch62 -p1
+%patch63 -p1
+%patch64 -p1
 
 # build smbk5pwd with other overlays
 ln -s ../../../contrib/slapd-modules/smbk5pwd/smbk5pwd.c servers/slapd/overlays
@@ -175,13 +166,13 @@ mv servers/slapd/back-perl/README{,.back_perl}
 
 # fix documentation encoding
 for filename in doc/drafts/draft-ietf-ldapext-acl-model-xx.txt; do
-  iconv -f iso-8859-1 -t utf-8 "$filename" > "$filename.utf8"
-  mv "$filename.utf8" "$filename"
+	iconv -f iso-8859-1 -t utf-8 "$filename" > "$filename.utf8"
+	mv "$filename.utf8" "$filename"
 done
 
 popd
 
-pushd openldap-ppolicy-check-password-%{check_password_version}
+pushd ltb-project-openldap-ppolicy-check-password-%{check_password_version}
 %patch90 -p1
 %patch91 -p1
 popd
@@ -190,13 +181,12 @@ popd
 
 %set_build_flags
 # enable experimental support for LDAP over UDP (LDAP_CONNECTIONLESS)
-export CFLAGS="${CFLAGS} ${LDFLAGS} -Wl,--as-needed -Wl,-z,now -DLDAP_CONNECTIONLESS"
+export CFLAGS="${CFLAGS} ${LDFLAGS} -Wl,--as-needed -DLDAP_CONNECTIONLESS -DLDAP_USE_NON_BLOCKING_TLS -DOPENSSL_NO_MD2"
 
 pushd openldap-%{version}
 %configure \
 	--enable-debug \
 	--enable-dynamic \
-	--enable-versioning \
 	\
 	--enable-dynacl \
 	--enable-cleartext \
@@ -204,7 +194,6 @@ pushd openldap-%{version}
 	--enable-lmpasswd \
 	--enable-spasswd \
 	--enable-modules \
-	--enable-perl \
 	--enable-rewrite \
 	--enable-rlookups \
 	--enable-slapi \
@@ -217,14 +206,11 @@ pushd openldap-%{version}
 	--enable-monitor=yes \
 	--disable-ndb \
 	--disable-sql \
-	--disable-wt \
 	\
 	--enable-overlays=mod \
 	\
 	--disable-static \
 	\
-	--enable-balancer=mod \
-        \
 	--with-cyrus-sasl \
 	--without-fetch \
 	--with-threads \
@@ -233,11 +219,11 @@ pushd openldap-%{version}
 	\
 	--libexecdir=%{_libdir}
 
-%make_build
+make %{_smp_mflags}
 popd
 
-pushd openldap-ppolicy-check-password-%{check_password_version}
-%make_build LDAP_INC="-I../openldap-%{version}/include \
+pushd ltb-project-openldap-ppolicy-check-password-%{check_password_version}
+make LDAP_INC="-I../openldap-%{version}/include \
  -I../openldap-%{version}/servers/slapd \
  -I../openldap-%{version}/build-servers/include"
 popd
@@ -247,11 +233,11 @@ popd
 mkdir -p %{buildroot}%{_libdir}/
 
 pushd openldap-%{version}
-%make_install STRIP_OPTS=""
+make install DESTDIR=%{buildroot} STRIP=""
 popd
 
 # install check_password module
-pushd openldap-ppolicy-check-password-%{check_password_version}
+pushd ltb-project-openldap-ppolicy-check-password-%{check_password_version}
 mv check_password.so check_password.so.%{check_password_version}
 ln -s check_password.so.%{check_password_version} %{buildroot}%{_libdir}/openldap/check_password.so
 install -m 755 check_password.so.%{check_password_version} %{buildroot}%{_libdir}/openldap/
@@ -284,7 +270,7 @@ mkdir -p %{buildroot}%{_tmpfilesdir}
 install -m 0644 %SOURCE2 %{buildroot}%{_tmpfilesdir}/slapd.conf
 
 # install default ldap.conf (customized)
-rm %{buildroot}%{_sysconfdir}/openldap/ldap.conf
+rm -f %{buildroot}%{_sysconfdir}/openldap/ldap.conf
 install -m 0644 %SOURCE4 %{buildroot}%{_sysconfdir}/openldap/ldap.conf
 
 # setup maintainance scripts
@@ -292,13 +278,15 @@ mkdir -p %{buildroot}%{_libexecdir}
 install -m 0755 -d %{buildroot}%{_libexecdir}/openldap
 install -m 0644 %SOURCE50 %{buildroot}%{_libexecdir}/openldap/functions
 install -m 0755 %SOURCE52 %{buildroot}%{_libexecdir}/openldap/check-config.sh
+install -m 0755 %SOURCE53 %{buildroot}%{_libexecdir}/openldap/upgrade-db.sh
 
 # remove build root from config files and manual pages
 perl -pi -e "s|%{buildroot}||g" %{buildroot}%{_sysconfdir}/openldap/*.conf
 perl -pi -e "s|%{buildroot}||g" %{buildroot}%{_mandir}/*/*.*
 
 # we don't need the default files -- RPM handles changes
-rm %{buildroot}%{_sysconfdir}/openldap/*.default
+rm -f %{buildroot}%{_sysconfdir}/openldap/*.default
+rm -f %{buildroot}%{_sysconfdir}/openldap/schema/*.default
 
 # install an init script for the servers
 mkdir -p %{buildroot}%{_unitdir}
@@ -308,92 +296,69 @@ install -m 0644 %SOURCE1 %{buildroot}%{_unitdir}/slapd.service
 mv %{buildroot}%{_libdir}/slapd %{buildroot}%{_sbindir}/
 
 # setup tools as symlinks to slapd
-for X in acl add auth cat dn index modify passwd test schema ; do
-  rm %{buildroot}%{_sbindir}/slap$X
-  ln -s slapd %{buildroot}%{_sbindir}/slap$X
-done
+rm -f %{buildroot}%{_sbindir}/slap{acl,add,auth,cat,dn,index,passwd,test,schema}
+rm -f %{buildroot}%{_libdir}/slap{acl,add,auth,cat,dn,index,passwd,test,schema}
+for X in acl add auth cat dn index passwd test schema; do ln -s slapd %{buildroot}%{_sbindir}/slap$X ; done
 
 # re-symlink unversioned libraries, so ldconfig is not confused
 pushd %{buildroot}%{_libdir}
 v=%{version}
 version=$(echo ${v%.[0-9]*})
-for lib in liblber libldap libslapi; do
-        rm -f ${lib}.so
-        ln -s ${lib}.so.%{so_ver} ${lib}.so
+for lib in liblber libldap libldap_r libslapi; do
+	rm -f ${lib}.so
+	ln -s ${lib}-${version}.so.2 ${lib}.so
 done
-
-for lib in $(ls | grep libldap); do
-    IFS='.'
-    read -r -a libsplit <<< "$lib"
-    if [[ -z "${libsplit[3]}" && -n "${libsplit[2]}" ]]
-    then
-        so_ver_short_2_4="%{so_ver_compat}"
-    elif [ -n "${libsplit[3]}" ]
-    then
-        so_ver_full_2_4="%{so_ver_compat}.${libsplit[3]}.${libsplit[4]}"
-    fi
-    unset IFS
-done
-
-
-# Copy libldap to libldap_r for both 2.4 and 2.6+ versions, make a versioned lib link
-# We increase it by 2 because libldap-2.4 has the 'so.2' major version on 2.4.59 (one of the last versions which is EOL)
-gcc -shared -o "%{buildroot}%{_libdir}/libldap-2.4.so.${so_ver_short_2_4}" -Wl,--no-as-needed -Wl,-z,now \
-       -Wl,-soname -Wl,libldap-2.4.so.${so_ver_short_2_4} -L "%{buildroot}%{_libdir}" -lldap
-gcc -shared -o "%{buildroot}%{_libdir}/libldap_r-2.4.so.${so_ver_short_2_4}" -Wl,--no-as-needed -Wl,-z,now \
-       -Wl,-soname -Wl,libldap_r-2.4.so.${so_ver_short_2_4} -L "%{buildroot}%{_libdir}" -lldap
-gcc -shared -o "%{buildroot}%{_libdir}/liblber-2.4.so.${so_ver_short_2_4}" -Wl,--no-as-needed -Wl,-z,now \
-       -Wl,-soname -Wl,liblber-2.4.so.${so_ver_short_2_4} -L "%{buildroot}%{_libdir}" -llber
-gcc -shared -o "%{buildroot}%{_libdir}/libslapi-2.4.so.${so_ver_short_2_4}" -Wl,--no-as-needed -Wl,-z,now \
-       -Wl,-soname -Wl,libslapi-2.4.so.${so_ver_short_2_4} -L "%{buildroot}%{_libdir}" -lslapi
-ln -s libldap-2.4.so.{${so_ver_short_2_4},${so_ver_full_2_4}}
-ln -s libldap_r-2.4.so.{${so_ver_short_2_4},${so_ver_full_2_4}}
-ln -s liblber-2.4.so.{${so_ver_short_2_4},${so_ver_full_2_4}}
-ln -s libslapi-2.4.so.{${so_ver_short_2_4},${so_ver_full_2_4}}
-
-cp libldap.so.${so_ver_full_2_4} libldap_r.so.${so_ver_full_2_4}
-ln -s libldap_r.so.{${so_ver_full_2_4},${so_ver_short_2_4}}
-ln -s libldap_r.so.${so_ver_full_2_4} libldap_r.so
-
 popd
 
 # tweak permissions on the libraries to make sure they're correct
 chmod 0755 %{buildroot}%{_libdir}/lib*.so*
 chmod 0644 %{buildroot}%{_libdir}/lib*.*a
-chmod 0644 %{buildroot}%{_libdir}/openldap/*.la
 
 # slapd.conf(5) is obsoleted since 2.3, see slapd-config(5)
 mkdir -p %{buildroot}%{_datadir}
 install -m 0755 -d %{buildroot}%{_datadir}/openldap-servers
 install -m 0644 %SOURCE3 %{buildroot}%{_datadir}/openldap-servers/slapd.ldif
-install -m 0644 %SOURCE5 %{buildroot}%{_datadir}/openldap-servers/UPGRADE_INSTRUCTIONS
 install -m 0700 -d %{buildroot}%{_sysconfdir}/openldap/slapd.d
-rm %{buildroot}%{_sysconfdir}/openldap/slapd.conf
-rm %{buildroot}%{_sysconfdir}/openldap/slapd.ldif
+rm -f %{buildroot}%{_sysconfdir}/openldap/slapd.conf
+rm -f %{buildroot}%{_sysconfdir}/openldap/slapd.ldif
 
 # move doc files out of _sysconfdir
 mv %{buildroot}%{_sysconfdir}/openldap/schema/README README.schema
+mv %{buildroot}%{_sysconfdir}/openldap/DB_CONFIG.example %{buildroot}%{_datadir}/openldap-servers/DB_CONFIG.example
+chmod 0644 %{buildroot}%{_datadir}/openldap-servers/DB_CONFIG.example
 
 # remove files which we don't want packaged
-rm %{buildroot}%{_libdir}/*.la  # because we do not want files in %{_libdir}/openldap/ removed, yet
+rm -f %{buildroot}%{_libdir}/*.la  # because we do not want files in %{_libdir}/openldap/ removed, yet
+
+rm -f %{buildroot}%{_localstatedir}/openldap-data/DB_CONFIG.example
+rmdir %{buildroot}%{_localstatedir}/openldap-data
 
 %ldconfig_scriptlets
 
-%if %{with servers}
 %pre servers
+
 # create ldap user and group
 getent group ldap &>/dev/null || groupadd -r -g 55 ldap
 getent passwd ldap &>/dev/null || \
 	useradd -r -g ldap -u 55 -d %{_sharedstatedir}/ldap -s /sbin/nologin -c "OpenLDAP server" ldap
+
+if [ $1 -eq 2 ]; then
+	# package upgrade
+
+	old_version=$(rpm -q --qf=%%{version} openldap-servers)
+	new_version=%{version}
+
+	if [ "$old_version" != "$new_version" ]; then
+		touch %{_sharedstatedir}/ldap/rpm_upgrade_openldap &>/dev/null
+	fi
+fi
+
 exit 0
+
 
 %post servers
 %systemd_post slapd.service
 
-# If it's not upgrade - we remove the UPGRADE_INSTRUCTIONS
-if [ $1 -lt 2 ] ; then
-    rm %{_datadir}/openldap-servers/UPGRADE_INSTRUCTIONS
-fi
 # generate configuration if necessary
 if [[ ! -f %{_sysconfdir}/openldap/slapd.d/cn=config.ldif && \
       ! -f %{_sysconfdir}/openldap/slapd.conf
@@ -405,9 +370,26 @@ if [[ ! -f %{_sysconfdir}/openldap/slapd.d/cn=config.ldif && \
       %{systemctl_bin} try-restart slapd.service &>/dev/null
 fi
 
+start_slapd=0
+
+# upgrade the database
+if [ -f %{_sharedstatedir}/ldap/rpm_upgrade_openldap ]; then
+	if %{systemctl_bin} --quiet is-active slapd.service; then
+		%{systemctl_bin} stop slapd.service
+		start_slapd=1
+	fi
+
+	%{_libexecdir}/openldap/upgrade-db.sh &>/dev/null
+	rm -f %{_sharedstatedir}/ldap/rpm_upgrade_openldap
+fi
+
 # restart after upgrade
 if [ $1 -ge 1 ]; then
-    %{systemctl_bin} condrestart slapd.service &>/dev/null || :
+	if [ $start_slapd -eq 1 ]; then
+		%{systemctl_bin} start slapd.service &>/dev/null || :
+	else
+		%{systemctl_bin} condrestart slapd.service &>/dev/null || :
+	fi
 fi
 
 exit 0
@@ -417,8 +399,41 @@ exit 0
 
 %postun servers
 %systemd_postun_with_restart slapd.service
-# endif with servers
-%endif
+
+%triggerin servers -- libdb
+
+# libdb upgrade (setup for %%triggerun)
+if [ $2 -eq 2 ]; then
+	# we are interested in minor version changes (both versions of libdb are installed at this moment)
+	if [ "$(rpm -q --qf="%%{version}\n" libdb | sed 's/\.[0-9]*$//' | sort -u | wc -l)" != "1" ]; then
+		touch %{_sharedstatedir}/ldap/rpm_upgrade_libdb
+	else
+		rm -f %{_sharedstatedir}/ldap/rpm_upgrade_libdb
+	fi
+fi
+
+exit 0
+
+
+%triggerun servers -- libdb
+
+# libdb upgrade (finish %%triggerin)
+if [ -f %{_sharedstatedir}/ldap/rpm_upgrade_libdb ]; then
+	if %{systemctl_bin} --quiet is-active slapd.service; then
+		%{systemctl_bin} stop slapd.service
+		start=1
+	else
+		start=0
+	fi
+
+	%{_libexecdir}/openldap/upgrade-db.sh &>/dev/null
+	rm -f %{_sharedstatedir}/ldap/rpm_upgrade_libdb
+
+	[ $start -eq 1 ] && %{systemctl_bin} start slapd.service &>/dev/null
+fi
+
+exit 0
+
 
 %files
 %doc openldap-%{version}/ANNOUNCEMENT
@@ -430,21 +445,21 @@ exit 0
 %dir %{_sysconfdir}/openldap/certs
 %config(noreplace) %{_sysconfdir}/openldap/ldap.conf
 %dir %{_libexecdir}/openldap/
-%{_libdir}/liblber.so.*
-%{_libdir}/libldap.so.*
-%{_libdir}/libldap_r.so.*
-%{_libdir}/libslapi.so.*
+%{_libdir}/liblber-2.4*.so.*
+%{_libdir}/libldap-2.4*.so.*
+%{_libdir}/libldap_r-2.4*.so.*
+%{_libdir}/libslapi-2.4*.so.*
 %{_mandir}/man5/ldif.5*
 %{_mandir}/man5/ldap.conf.5*
 
-%if %{with servers}
 %files servers
 %doc openldap-%{version}/contrib/slapd-modules/smbk5pwd/README.smbk5pwd
 %doc openldap-%{version}/doc/guide/admin/*.html
 %doc openldap-%{version}/doc/guide/admin/*.png
 %doc openldap-%{version}/servers/slapd/back-perl/SampleLDAP.pm
 %doc openldap-%{version}/servers/slapd/back-perl/README.back_perl
-%doc openldap-ppolicy-check-password-%{check_password_version}/README.check_pwd
+%doc openldap-%{version}/servers/slapd/back-perl/README.back_perl
+%doc ltb-project-openldap-ppolicy-check-password-%{check_password_version}/README.check_pwd
 %doc README.schema
 %config(noreplace) %dir %attr(0750,ldap,ldap) %{_sysconfdir}/openldap/slapd.d
 %config(noreplace) %{_sysconfdir}/openldap/schema
@@ -455,32 +470,27 @@ exit 0
 %{_unitdir}/slapd.service
 %{_datadir}/openldap-servers/
 %{_libdir}/openldap/accesslog*
-%{_libdir}/openldap/allop*
 %{_libdir}/openldap/auditlog*
-%{_libdir}/openldap/autoca*
-%{_libdir}/openldap/back_asyncmeta*
+%{_libdir}/openldap/allop*
 %{_libdir}/openldap/back_dnssrv*
 %{_libdir}/openldap/back_ldap*
 %{_libdir}/openldap/back_meta*
 %{_libdir}/openldap/back_null*
 %{_libdir}/openldap/back_passwd*
 %{_libdir}/openldap/back_relay*
+%{_libdir}/openldap/back_shell*
 %{_libdir}/openldap/back_sock*
-%{_libdir}/openldap/check_password*
+%{_libdir}/openldap/back_perl*
 %{_libdir}/openldap/collect*
 %{_libdir}/openldap/constraint*
 %{_libdir}/openldap/dds*
 %{_libdir}/openldap/deref*
 %{_libdir}/openldap/dyngroup*
 %{_libdir}/openldap/dynlist*
-%{_libdir}/openldap/home*
-%{_libdir}/openldap/lloadd*
 %{_libdir}/openldap/memberof*
-%{_libdir}/openldap/otp*
 %{_libdir}/openldap/pcache*
 %{_libdir}/openldap/ppolicy*
 %{_libdir}/openldap/refint*
-%{_libdir}/openldap/remoteauth*
 %{_libdir}/openldap/retcode*
 %{_libdir}/openldap/rwm*
 %{_libdir}/openldap/seqmod*
@@ -490,34 +500,16 @@ exit 0
 %{_libdir}/openldap/translucent*
 %{_libdir}/openldap/unique*
 %{_libdir}/openldap/valsort*
+%{_libdir}/openldap/check_password*
 %{_libexecdir}/openldap/functions
 %{_libexecdir}/openldap/check-config.sh
+%{_libexecdir}/openldap/upgrade-db.sh
 %{_sbindir}/sl*
 %{_mandir}/man8/*
-%{_mandir}/man5/lloadd.conf.5*
 %{_mandir}/man5/slapd*.5*
 %{_mandir}/man5/slapo-*.5*
-%{_mandir}/man5/slappw-argon2.5*
 # obsolete configuration
 %ghost %config(noreplace,missingok) %attr(0640,ldap,ldap) %{_sysconfdir}/openldap/slapd.conf
-%else
-%exclude %{_datadir}/openldap-servers/
-%exclude %{_libdir}/openldap/
-%exclude %{_libexecdir}/openldap/check-config.sh
-%exclude %{_libexecdir}/openldap/functions
-%exclude %{_mandir}/man5/slapd*.5*
-%exclude %{_mandir}/man5/slapo-*.5*
-%exclude %{_mandir}/man5/lloadd.conf.5*
-%exclude %{_mandir}/man5/slappw-argon2.5*
-%exclude %{_mandir}/man8/*
-%exclude %{_sbindir}/sl*
-%exclude %{_sysconfdir}/openldap/check_password.conf
-%exclude %{_sysconfdir}/openldap/schema
-%exclude %{_tmpfilesdir}/slapd.conf
-%exclude %{_unitdir}/slapd.service
-# endif with servers
-%endif
-
 
 %files clients
 %{_bindir}/*
@@ -525,159 +517,37 @@ exit 0
 
 %files devel
 %doc openldap-%{version}/doc/drafts openldap-%{version}/doc/rfc
-%{_libdir}/liblber.so
-%{_libdir}/libldap.so
-%{_libdir}/libldap_r.so
-%{_libdir}/libslapi.so
+%{_libdir}/lib*.so
 %{_includedir}/*
-%{_libdir}/pkgconfig/lber.pc
-%{_libdir}/pkgconfig/ldap.pc
 %{_mandir}/man3/*
 
-%files compat
-%{_libdir}/libldap-2.4*.so.*
-%{_libdir}/libldap_r-2.4*.so.*
-%{_libdir}/liblber-2.4*.so.*
-%{_libdir}/libslapi-2.4*.so.*
-
 %changelog
-* Wed Jun 14 2023 Simon Pichugin <spichugi@redhat.com> - 2.6.3-1
-- Rebase OpenLDAP to 2.6.3
-  Related: rhbz#2212983
+* Thu Aug  5 2021 Simon Pichugin <spichugi@redhat.com> - 2.4.46-18
+- Add TLS_REQSAN option and change the default to TRY (#1814674)
 
-* Fri Aug 5 2022 Simon Pichugin <spichugi@redhat.com> - 2.6.2-3
-- Add export symbols related to LDAP_CONNECTIONLESS
-  Related: rhbz#2115465
+* Wed Jun 16 2021 Simon Pichugin <spichugi@redhat.com> - 2.4.46-17
+- Rebuild without MP_2 support (#1909037)
 
-* Mon Jun 27 2022 Simon Pichugin <spichugi@redhat.com> - 2.6.2-2
-- Change STRIP to STRIP_OPTS
-  Related: rhbz#2094159
+* Thu Sep 10 2020 Simon Pichugin <spichugi@redhat.com> - 2.4.46-16
+- CLDAP ldap_result hangs if nobody listens on the port (#1875361)
 
-* Wed Jun  1 2022 Simon Pichugin <spichugi@redhat.com> - 2.6.2-1
-- Update to new major release OpenLDAP 2.6.2
-- The client tools parameters '-h' and '-p' are officially deprecated,
-  please, use '-H' parameter instead.
-  Related: rhbz#2094159
+* Thu Jun 18 2020 Matus Honek <mhonek@redhat.com> - 2.4.46-15
+- Fix covscan issues from previous release (#1822737)
 
-* Fri Apr 22 2022 Igor Raits <igor.raits@gmail.com> - 2.4.59-5
-- Pull systemd only from server subpackage 
+* Tue Jun 16 2020 Matus Honek <mhonek@redhat.com> - 2.4.46-14
+- Backport Channel Binding support (#1822904, #1822737)
 
-* Wed Dec 15 2021 Viktor Ashirov <vashirov@redhat.com> - 2.4.59-4
-- Add "with servers" conditional
-  Related: rhbz#2030665
+* Wed Jan 15 2020 Matus Honek <mhonek@redhat.com> - 2.4.46-11
+- Use OpenSSL-1.0.2+ API for host name verification (#1788572)
 
-* Thu Sep 23 2021 Simon Pichugin <spichugi@redhat.com> - 2.4.59-3
-- Enable BIND_NOW for the linked library too. Related: rhbz#2002747
+* Sun Aug 18 2019 Matus Honek <mhonek@redhat.com> - 2.4.46-10
+- Do not fallback to checking CN when no SAN matched (#1740070)
 
-* Wed Sep 22 2021 Simon Pichugin <spichugi@redhat.com> - 2.4.59-2
-- Enable BIND_NOW to prevent GOT overwrite attacks.
-- Ignore badfuncs error in rpminspect because it's a false positive
-  Related: rhbz#2002747
+* Mon Dec 17 2018 Matus Honek <mhonek@redhat.com> - 2.4.46-9
+- Reference default system-wide CA certificates in manpages (#1611624)
 
-* Tue Sep 14 2021 Simon Pichugin <spichugi@redhat.com> - 2.4.59-1
-- Rebase openldap to 2.4.59 Related: rhbz#2002747
-
-* Mon Aug 09 2021 Mohan Boddu <mboddu@redhat.com> - 2.4.57-8
-- Rebuilt for IMA sigs, glibc 2.34, aarch64 flags
-  Related: rhbz#1991688
-
-* Mon Jul 12 2021 Simon Pichugin <spichugi@redhat.com> - 2.4.57-7
-- Fix Channel Binding tests Related: rhbz#1967853
-
-* Thu Jun 24 2021 Simon Pichugin <spichugi@redhat.com> - 2.4.57-6
-- Fix slapd.tmpfiles complaints. Related: rhbz#1969853
-- Use https:// for source Related: rhbz#1973597
-
-* Tue Jun 15 2021 Mohan Boddu <mboddu@redhat.com> - 2.4.57-5
-- Rebuilt for RHEL 9 BETA for openssl 3.0 Related: rhbz#1971065
-
-* Fri Jun  4 2021 Simon Pichugin <spichugi@redhat.com> - 2.4.57-4
-- Backport Channel Binding support. Related: rhbz#1967853
-- Fix coverity issues. Related: rhbz#1938829
-
-* Fri Apr 16 2021 Mohan Boddu <mboddu@redhat.com> - 2.4.57-3
-- Rebuilt for RHEL 9 BETA on Apr 15th 2021. Related: rhbz#1947937
-
-* Tue Jan 26 2021 Fedora Release Engineering <releng@fedoraproject.org> - 2.4.57-2
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
-
-* Tue Jan 19 2021 Simon Pichugin <spichugi@redhat.com> - 2.4.57-1
-- Rebase to version 2.4.57 (#1917583)
-
-* Thu Nov 26 2020 Simon Pichugin <spichugi@redhat.com> - 2.4.56-4
-- Use gcc to link libldap_r to libldap (#1537260)
-
-* Fri Nov 20 2020 Simon Pichugin <spichugi@redhat.com> - 2.4.56-3
-- Fix 32-bit libraries build (#1537260)
-
-* Fri Nov 20 2020 Simon Pichugin <spichugi@redhat.com> - 2.4.56-2
-- Drop non-threaded libldap (#1537260)
-
-* Wed Nov 18 2020 Simon Pichugin <spichugi@redhat.com> - 2.4.56-1
-- Rebase to version 2.4.56 (#1896508)
-
-* Mon Nov 02 2020 Simon Pichugin <spichugi@redhat.com> - 2.4.55-1
-- Rebase to version 2.4.55 (#1891622)
-
-* Tue Oct 13 2020 Simon Pichugin <spichugi@redhat.com> - 2.4.54-1
-- Rebase to version 2.4.54 (#1887581)
-
-* Thu Sep 10 2020 Simon Pichugin <spichugi@redhat.com> - 2.4.53-1
-- Rebase to version 2.4.53 (#1868240)
-
-* Thu Sep 03 2020 Simon Pichugin <spichugi@redhat.com> - 2.4.52-1
-- Rebase to version 2.4.52 (#1868240)
-
-* Sat Aug 01 2020 Fedora Release Engineering <releng@fedoraproject.org> - 2.4.50-4
-- Second attempt - Rebuilt for
-  https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
-
-* Tue Jul 28 2020 Fedora Release Engineering <releng@fedoraproject.org> - 2.4.50-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
-
-* Mon Jun 22 2020 Jitka Plesnikova <jplesnik@redhat.com> - 2.4.50-2
-- Perl 5.32 rebuild
-
-* Wed Jun 17 2020 Matus Honek <mhonek@redhat.com> - 2.4.50-1
-- Rebase to version 2.4.50 (#1742285)
-
-* Tue Jun 16 2020 Tom Stellard <tstellar@redhat.com> - 2.4.47-5
-- Spec file cleanups
-- Add BuildRequres: gcc [1]
-- make_build [2] and make_install [3]
-- [1] https://docs.fedoraproject.org/en-US/packaging-guidelines/C_and_C++/#_buildrequires_and_requires
-- [2] https://docs.fedoraproject.org/en-US/packaging-guidelines/#_parallel_make
-- [3] https://docs.fedoraproject.org/en-US/packaging-guidelines/#_why_the_makeinstall_macro_should_not_be_used
-
-* Wed Jan 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 2.4.47-4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
-
-* Thu Jul 25 2019 Fedora Release Engineering <releng@fedoraproject.org> - 2.4.47-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
-
-* Thu May 30 2019 Jitka Plesnikova <jplesnik@redhat.com> - 2.4.47-2
-- Perl 5.30 rebuild
-
-* Wed Feb 13 2019 Matus Honek <mhonek@redhat.com> - 2.4.47-1
-- Rebase to upstream version 2.4.47
-
-* Fri Feb 01 2019 Fedora Release Engineering <releng@fedoraproject.org> - 2.4.46-13
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
-
-* Mon Jan 14 2019 Björn Esser <besser82@fedoraproject.org> - 2.4.46-12
-- Rebuilt for libcrypt.so.2 (#1666033)
-
-* Mon Dec 17 2018 Matus Honek <mhonek@redhat.com> - 2.4.46-11
-- Reference default system-wide CA certificates in manpages (#1611591)
-
-* Tue Oct 16 2018 Matus Honek <mhonek@redhat.com> - 2.4.46-10
-- Revert "Fix: Cannot use SSL3 anymore"
-
-* Mon Oct 08 2018 Matus Honek <mhonek@redhat.com> - 2.4.46-9
-- Backport upstream fixes for ITS 7595 - add OpenSSL EC support (#1623495)
-
-* Tue Aug 14 2018 Matus Honek <mhonek@redhat.com> - 2.4.46-8
-- Fix: Cannot use SSL3 anymore (#1592431)
+* Tue Oct 16 2018 Matus Honek <mhonek@redhat.com> - 2.4.46-8
+- Backport upstream fixes for ITS 7595 - add OpenSSL EC support (#1623497)
 
 * Fri Jul 13 2018 Fedora Release Engineering <releng@fedoraproject.org> - 2.4.46-7
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild

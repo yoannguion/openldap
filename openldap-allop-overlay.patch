@@ -4,10 +4,9 @@ Author: Matus Honek <mhonek@redhat.com>
 Resolves: #1319782
 
 diff --git a/servers/slapd/overlays/Makefile.in b/servers/slapd/overlays/Makefile.in
-index b5c3fc8..9aa8a4f 100644
 --- a/servers/slapd/overlays/Makefile.in
 +++ b/servers/slapd/overlays/Makefile.in
-@@ -38,7 +38,8 @@ SRCS = overlays.c \
+@@ -33,7 +33,8 @@ SRCS = overlays.c \
  	translucent.c \
  	unique.c \
  	valsort.c \
@@ -17,7 +16,7 @@ index b5c3fc8..9aa8a4f 100644
  OBJS = statover.o \
  	@SLAPD_STATIC_OVERLAYS@ \
  	overlays.o
-@@ -58,7 +59,7 @@ NT_LINK_LIBS = -L.. -lslapd $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
+@@ -53,7 +54,7 @@ NT_LINK_LIBS = -L.. -lslapd $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
  UNIX_LINK_LIBS = $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
  
  LIBRARY = ../liboverlays.a
@@ -26,7 +25,7 @@ index b5c3fc8..9aa8a4f 100644
  
  XINCPATH = -I.. -I$(srcdir)/..
  XDEFS = $(MODULES_CPPFLAGS)
-@@ -148,6 +149,12 @@ smbk5pwd.lo : smbk5pwd.c
+@@ -125,6 +126,12 @@ unique.la : unique.lo
  smbk5pwd.la : smbk5pwd.lo
  	$(LTLINK_MOD) -module -o $@ smbk5pwd.lo version.lo $(LINK_LIBS) $(shell pkg-config openssl --libs)
  

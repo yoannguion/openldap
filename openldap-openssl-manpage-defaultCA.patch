@@ -6,10 +6,9 @@ certificates.
 Author: Matus Honek <mhonek@redhat.com>
 
 diff --git a/doc/man/man5/ldap.conf.5 b/doc/man/man5/ldap.conf.5
-index 6084298..3070bb4 100644
 --- a/doc/man/man5/ldap.conf.5
 +++ b/doc/man/man5/ldap.conf.5
-@@ -327,6 +327,9 @@ are more options you can specify.  These options are used when an
+@@ -307,6 +307,9 @@ are more options you can specify.  These options are used when an
  .B ldaps:// URI
  is selected (by default or otherwise) or when the application
  negotiates TLS by issuing the LDAP StartTLS operation.
@@ -20,10 +19,9 @@ index 6084298..3070bb4 100644
  .B TLS_CACERT <filename>
  Specifies the file that contains certificates for all of the Certificate
 diff --git a/doc/man/man5/slapd-config.5 b/doc/man/man5/slapd-config.5
-index a559b0c..adda87a 100644
 --- a/doc/man/man5/slapd-config.5
 +++ b/doc/man/man5/slapd-config.5
-@@ -878,6 +878,10 @@ If
+@@ -801,6 +801,10 @@ If
  .B slapd
  is built with support for Transport Layer Security, there are more options
  you can specify.
@@ -35,10 +33,9 @@ index a559b0c..adda87a 100644
  .B olcTLSCipherSuite: <cipher-suite-spec>
  Permits configuring what ciphers will be accepted and the preference order.
 diff --git a/doc/man/man5/slapd.conf.5 b/doc/man/man5/slapd.conf.5
-index b6e9250..1653a1b 100644
 --- a/doc/man/man5/slapd.conf.5
 +++ b/doc/man/man5/slapd.conf.5
-@@ -1108,6 +1108,10 @@ If
+@@ -1032,6 +1032,10 @@ If
  .B slapd
  is built with support for Transport Layer Security, there are more options
  you can specify.
