@@ -22,10 +22,11 @@ jobs:
       - name: build rpm
         env:
           SPEC_FILE: openldap.spec
+          QA_RPATHS: 0x0002
         uses: docker://yoannguion/rpmbuilder:el9
       - name: release rpm
         uses: ncipollo/release-action@v1
         with:
           tag: v2.4.46-el9
-          artifacts: "*.src.rpm,*.rpm"
+          artifacts: "*.rpm"
           token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
