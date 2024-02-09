@@ -331,6 +331,10 @@ rm -f %{buildroot}%{_libdir}/*.la  # because we do not want files in %{_libdir}/
 rm -f %{buildroot}%{_localstatedir}/openldap-data/DB_CONFIG.example
 rmdir %{buildroot}%{_localstatedir}/openldap-data
 
+rm -f %{buildroot}/usr/lib64/liblber.a
+rm -f %{buildroot}/usr/lib64/libldap.a
+rm -f %{buildroot}/usr/lib64/libldap_r.a
+rm -f %{buildroot}/usr/lib64/libslapi.a
 %ldconfig_scriptlets
 
 %pre servers

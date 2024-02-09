@@ -22,12 +22,10 @@ jobs:
       - name: build rpm el9
         env:
           SPEC_FILE: openldap.spec
-          QA_RPATHS: 0x0002
         uses: docker://yoannguion/rpmbuilder:el9
       - name: build rpm el8
         env:
           SPEC_FILE: openldap.spec
-          QA_RPATHS: 0x0002
         uses: docker://yoannguion/rpmbuilder:el8
       - name: release rpm
         uses: ncipollo/release-action@v1
