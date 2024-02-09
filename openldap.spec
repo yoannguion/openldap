@@ -15,7 +15,6 @@ Source1: slapd.service
 Source2: slapd.tmpfiles
 Source3: slapd.ldif
 Source4: ldap.conf
-Source5: static-slapd-Makefile.in
 Source10: ltb-project-openldap-ppolicy-check-password-%{check_password_version}.tar.gz
 Source50: libexec-functions
 Source52: libexec-check-config.sh
@@ -125,7 +124,6 @@ programs needed for accessing and modifying OpenLDAP directories.
 %setup -q -c -a 0 -a 10
 
 pushd openldap-%{version}
-cp -f %SOURCE5 servers/slapd/Makefile.in
 
 AUTOMAKE=%{_bindir}/true autoreconf -fi
 
