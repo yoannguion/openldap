@@ -209,8 +209,6 @@ pushd openldap-%{version}
 	\
 	--enable-overlays=mod \
 	\
-	--disable-static \
-	\
 	--with-cyrus-sasl \
 	--without-fetch \
 	--with-threads \
